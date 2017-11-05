@@ -22,33 +22,27 @@ void dump_buf_4k_states(BUF_4K *buf, u8 buf_size)
 	printf("\n");
 }
 
-void dump_block_512(BUF_512 *block)
+void dump_block_512(u8 *block)
 {
 	int i;
-	printf("Dump a block (512): ");
-	printf("block->sec = %ld, block->buf[] =\n", block->sec);
+	printf("Dump a block (512):\n");
 	for (i = 0; i <= 511; i++)
 	{
-		printf("%02X ", block->buf[i]);
+		printf("%02X ", block[i]);
 		if (i % 16 == 15)
 			printf("\n");
 	}
 }
 
-void dump_block_4k(BUF_4K *block)
+void dump_block_4k(u8 *block)
 {
-	int i, j;
-	printf("Dump a block (4k): ");
-	printf("block->sec = %ld, block->buf[] =\n", block->sec);
-	for (i = 0; i <= 7; i++)
+	int i;
+	printf("Dump a block (4k):\n");
+	for (i = 0; i <= 512 * 8 - 1; i++)
 	{
-		for (j = 0; j <= 511; j++)
-		{
-			printf("%02X ", block->buf[j]);
-			if (i % 16 == 15)
-				printf("\n");
-		}
-		printf("\n");
+		printf("%02X ", block[i]);
+		if (i % 16 == 15)
+			printf("\n");
 	}
 }
 

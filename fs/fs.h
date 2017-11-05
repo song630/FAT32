@@ -9,11 +9,14 @@
 #define LOCAL_BUF_NUM 4  // in struct FILE
 #define SD_PATH "D://virtual_disk.vhd"
 
+#define FS_DEBUG
+
 // some FAT32 featured data structures defined here:
 
-typedef struct DBR_struct {  // 512 bytes
+struct __attribute__((__packed__)) DBR_struct {  // 512 bytes
 	u8 jump_instr[3];  // 3 bytes, machine instruction
-	u32 edition[2];  // 8 bytes, edition of fs
+	// ===== ERROR: u32 edition[2]
+	u8 edition[8];  // 8 bytes, edition of fs
 	u16 bytes_per_sec; // 2 bytes, should be 512 =====
 	u8 secs_per_clus;  // 1 byte, should be 8 =====
 	u16 reserved_secs;  // 2 bytes, should be 38 =====
@@ -38,14 +41,14 @@ typedef struct DBR_struct {  // 512 bytes
 	u8 ext_mark;  // 1 byte, should be 0x29
 	u32 volume_sequence;  // 4 bytes
 	u8 vol_mark[11];  // 11 bytes
-	u32 fs_format[2];  // 8 bytes
+	u8 fs_format[8];  // 8 bytes
 	u8 unused[410];  // 410 bytes
 	u16 signature;  // 2 bytes, should be 0x55AA
-} DBR_ATTRS;  // important attrs have been marked "====="
+};  // important attrs have been marked "====="
 
 typedef union DBR_union {  // 512 bytes
-	u8 buf[512];  // stores raw data
-	DBR_ATTRS attrs;
+	u8 buf[512];  // stores raw data of DBR sector
+	struct DBR_struct attrs;
 } DBR_SEC;
 
 typedef struct fsinfo_struct {
@@ -58,10 +61,10 @@ typedef struct fsinfo_struct {
 	u32 total_data_sectors;
 	u32 first_data_sector;
 
-	u8 buf[512];  // stores raw data
+	u8 buf[512];  // stores raw data of FSINFO sector
 } FSINFO_SEC;
 
-typedef struct short_dir_entry_struct {  // 32 bytes
+struct __attribute__((__packed__)) short_dir_entry_struct {  // 32 bytes
 	u8 fore_name[8];  // file name
 	u8 ext_name[3];  // extension name
 	u8 attr_byte;  // one-hot
@@ -75,10 +78,10 @@ typedef struct short_dir_entry_struct {  // 32 bytes
 	u16 latest_mod_date;
 	u16 start_clus_low_16;  // =====
 	u32 length;  // ===== in bytes ?
-} SHORT_DIR_ENTRY_ATTRS;
+};
 
 typedef union short_dir_entry_union {
-	SHORT_DIR_ENTRY_ATTRS attrs;
+	struct short_dir_entry_struct attrs;
 	u8 entry[32];  // raw data
 } SHORT_DIR_ENTRY;
 
@@ -103,14 +106,49 @@ FSINFO_SEC FSINFO_sec;  // attrs and raw data
 
 void init_FILE(fs_FILE *f_ptr);  // clear struct FILE
 
-int init_on_boot();  // call init_fat_dir_bufs() and init_MBR_DBR();
+void init_FSINFO();  // clear struct FSINFO
 
-void init_fat_dir_bufs();  // init global buffers
+void init_fat_buf();  // init global buffers
+
+void init_dir_bufs();  // init global buffers
 
 int init_MBR_DBR();
 
 int write_FAT_sector(u32 index);  // write a sector of FAT table
 
 int read_FAT_sector(u32 index);  // read a sector from FAT table
+// iteratively deal with the names along the file path,
+// convert them to the format that storing in short dir entry,
+// and put the result in the given param.
+void convert_name_between_slash(u8 *path, u8 *short_name);
+// accepts an absolute path, and find the file
+// find every sub-dir by means of short dir entry
+int find_file(fs_FILE *f_ptr);
+// first find the file,
+// and fill in info of "fs_FILE"
+int open_file(fs_FILE *f_ptr, u8 *filename);
+// write FSINFO back (2 times), and write back the global buffers
+int flush_all();
+
+int close_file(fs_FILE *f_ptr);
+
+int read_file(fs_FILE *f_ptr, u8 *buf, u32 count);
+// find, starting from "start", and store the result in "free_clus"
+int find_free_clus(u32 start, u32 *free_clus);
+// store the result in "clus"
+int alloc_clus(u32 *clus);
+
+int write_file(fs_FILE *f_ptr, u8 *buf, u32 count);
+
+int lseek(fs_FILE *f_ptr, u32 offset);
+// find a free dir entry, store the result in "free_entry"
+int find_free_entry(u8 buf_index, u32 *free_entry);
+
+int create_file(u8 *filename);
+// given an dir entry, convert the short-dir-format name to normal,
+// and save the result in "filename".
+int get_file_name(u8 *entry, u8 *filename);
+// store the result in "size"
+int get_file_size(u8 *entry, u32 *size);
 
 #endif

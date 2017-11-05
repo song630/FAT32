@@ -2,8 +2,6 @@
 #include "fscache.h"
 #include "fs_debug.h"
 
-#define FS_DEBUG
-
 /* buf: buffer (4 blocks)
  * clock_head: currently pointes to which block (the addr passed)
  * buf_size: in case of overflow
@@ -208,11 +206,13 @@ int write_blocks(u8 *buf, u32 dst_sec, u8 num_blocks)
 {
 	int i;
 	FILE *f_ptr;
+	/*
 	if (dst_sec + num_blocks - 1 > DBR_sec.attrs.total_secs)  // overflow
 	{
 		printf("inside write_blocks(): overflow.\n");
 		return 1;  // fail
 	}
+	*/
 	if ((f_ptr = fopen(SD_PATH, "wb")) == NULL)
 	{
 		printf("inside write_blocks(): Fail to open file.\n");
@@ -221,9 +221,9 @@ int write_blocks(u8 *buf, u32 dst_sec, u8 num_blocks)
 	for (i = 0; i <= num_blocks - 1; i++)
 	{  // SEEK_SET: from the beginning of file
 		// fseek(): the file pointer points to the sector to be written
-		fseek(f_ptr, (dst_sec + i) * DBR_sec.attrs.bytes_per_sec, SEEK_SET);
-		fwrite(buf + i * DBR_sec.attrs.bytes_per_sec, sizeof(u8), 
-			DBR_sec.attrs.bytes_per_sec, f_ptr);
+		fseek(f_ptr, (dst_sec + i) * 512/*DBR_sec.attrs.bytes_per_sec*/, SEEK_SET);
+		fwrite(buf + i * 512/*DBR_sec.attrs.bytes_per_sec*/, sizeof(u8), 
+			512/*DBR_sec.attrs.bytes_per_sec*/, f_ptr);
 	}
 	fclose(f_ptr);
 	return 0;
@@ -232,18 +232,20 @@ int write_blocks(u8 *buf, u32 dst_sec, u8 num_blocks)
 /* buf: read to it
  * src_sec: read the contents starting from "src_sec"
  * 
- * notice: this function doees not modify "state"
+ * notice: this function does not modify "state"
  */
 // ===== tested ===== //
 int read_blocks(u8 *buf, u32 src_sec, u8 num_blocks)
 {
 	int i;
 	FILE *f_ptr;
+	/*
 	if (src_sec + num_blocks - 1 > DBR_sec.attrs.total_secs)  // overflow
 	{
 		printf("inside read_blocks(): overflow.\n");
 		return 1;  // fail
 	}
+	*/
 	if ((f_ptr = fopen(SD_PATH, "rb")) == NULL)
 	{
 		printf("inside write_blocks(): Fail to open file.\n");
@@ -251,9 +253,9 @@ int read_blocks(u8 *buf, u32 src_sec, u8 num_blocks)
 	}
 	for (i = 0; i <= num_blocks - 1; i++)
 	{
-		fseek(f_ptr, (src_sec + i) * DBR_sec.attrs.bytes_per_sec, SEEK_SET);
-		fread(buf + i * DBR_sec.attrs.bytes_per_sec, sizeof(u8), 
-			DBR_sec.attrs.bytes_per_sec, f_ptr);
+		fseek(f_ptr, (src_sec + i) * 512/* DBR_sec.attrs.bytes_per_sec */, SEEK_SET);
+		fread(buf + i * 512/* DBR_sec.attrs.bytes_per_sec*/, sizeof(u8), 
+			512/*DBR_sec.attrs.bytes_per_sec*/, f_ptr);
 	}
 	fclose(f_ptr);
 	return 0;

@@ -39,69 +39,36 @@ typedef unsigned char u8;  // 1 byte
 typedef unsigned short u16;  // 2 bytes
 typedef unsigned long u32;  // 4 bytes
 
-u8 fat_clock_head = 0;
-
-typedef struct buf_4k {  // 8 sectors per cluster
-	u32 sec;  // the num of sector stored in this buffer
-	u8 state;
-	u8 buf[4096];
-} BUF_4K;
-
-BUF_4K buf_zone[4];
-
-void dump_buf_4k_states(BUF_4K *buf, u8 buf_size)
+void fs_memset(void *buf, u8 c, u32 count)
 {
 	int i;
-	printf("buf 4k states:");
-	for (i = 0; i <= buf_size - 1; i++)
-		printf(" %02X", buf[i].state);
-	printf("\n");
+	u8 *ptr = (u8 *)buf;
+	for (i = 0; i <= count - 1; i++)
+		*(ptr + i) = c;
 }
 
-u8 victim_4k(BUF_4K *buf, u8 *clock_head, u8 buf_size)
+void fs_memcpy(void *dst, void *src, u32 count)
 {
-	int index;
-	// notice: only use clock_head to refer to the selected block is not enough,
-	// since it may be changed if reaching the end, so introduce another "index".
-	for (; *clock_head <= buf_size - 1; (*clock_head)++)
-	{  // the 1st sweep
-		if ((buf[*clock_head].state & 0x02) == 0)  // ref bit == 0
-		{
-			if ((buf[*clock_head].state & 0x01) == 0x00)  // dirty bit == 0
-			{
-				#ifdef FS_DEBUG
-				printf("inside victim_4k(): found buf[%d] in 1st sweep.\n", *clock_head);
-				#endif
-				index = *clock_head;
-				if (*clock_head + 1 == buf_size)  // reach the last block
-					*clock_head = 0;  // return to the head of the queue
-				return index;  // found
-			}
-		}
-		else
-			buf[*clock_head].state &= 0x01;  // set ref bit 0
-	}
-	for (*clock_head = 0; *clock_head <= buf_size - 1; (*clock_head)++)
-	{  // the 2nd sweep
-		if ((buf[*clock_head].state & 0x02) == 0x02)  // ref bit != 0
-			continue;
-		else if ((buf[*clock_head].state & 0x01) == 0) // ref bit == 0, dirty bit == 0
-		{
-			#ifdef FS_DEBUG
-			printf("inside victim_4k(): found buf[%d] in 2st sweep.\n", *clock_head);
-			dump_buf_4k_states(buf, buf_size); // print all "state" of buf
-			#endif
-			return index = *clock_head;  // found
-		}
-	}
-	// not found, reaching the end during the 2nd sweep
-	#ifdef FS_DEBUG
-	printf("inside victim_4k(): not found in 2 sweeps.\n");
-	dump_buf_4k_states(buf, buf_size); // print all "state" of buf
-	#endif
-	*clock_head = 0;
-	return index = buf_size - 1;  // just return the last block (its ref bit must == 0)
+	int i;
+	u8 *dst_ptr = (u8 *)dst;
+	u8 *src_ptr = (u8 *)src;
+	for (i = 0; i <= count - 1; i++)
+		*(dst_ptr + i) = *(src_ptr + i);
 }
+
+typedef struct A_struct {
+	u8 a1;
+	u8 a2;
+	u8 a3[3];
+	u16 a4;
+	u32 a5;
+	u8 a6;
+} A_attr;
+
+typedef union A_union {
+	A_attr attr;
+	u8 buf[12];
+} A;
 
 int main(void)
 {
@@ -111,12 +78,22 @@ int main(void)
 	// read_a_sector(446 + 8);
 	// printf("\n\n");
 	// read_a_sector(512 * 128);
-	buf_zone[0].state = 0x01;
-	buf_zone[1].state = 0x02;
-	buf_zone[2].state = 0x01;
-	buf_zone[3].state = 0x03;
-	int index = victim_4k(buf_zone, &fat_clock_head, 4);
-	printf("index = %d\n", index);
+	A obj;
+	obj.buf[0] = 0x05;  // a1
+	obj.buf[1] = 0x04;  // a2
+	obj.buf[2] = 0x03;  // a3
+	obj.buf[3] = 0x02;
+	obj.buf[4] = 0x01;
+	obj.buf[5] = 0xA0;  // a4
+	obj.buf[6] = 0x5B;
+	obj.buf[7] = 0x08;  // a5
+	obj.buf[8] = 0x15;
+	obj.buf[9] = 0xA1;
+	obj.buf[10] = 0x04;
+	obj.buf[11] = 0x10;  // a6
+	u32 a = 77665544;  // 0x04A11508
+	u32 b = 23456;  // 0x5BA0
+	printf("%d\n", obj.attr.a4 == 23456);
 
 	system("pause");
 	return 0;
