@@ -3,13 +3,15 @@
 
 #include "util.h"  // u8, u16, u32
 #include "fscache.h"  // BUF_4K
+#include <stdio.h>
+#include <stdlib.h>
 
 #define LOCAL_BUF_NUM 4  // in struct FILE
 #define SD_PATH "D://virtual_disk.vhd"
 
 // some FAT32 featured data structures defined here:
 
-typedef DBR_struct {  // 512 bytes
+typedef struct DBR_struct {  // 512 bytes
 	u8 jump_instr[3];  // 3 bytes, machine instruction
 	u32 edition[2];  // 8 bytes, edition of fs
 	u16 bytes_per_sec; // 2 bytes, should be 512 =====
@@ -41,7 +43,7 @@ typedef DBR_struct {  // 512 bytes
 	u16 signature;  // 2 bytes, should be 0x55AA
 } DBR_ATTRS;  // important attrs have been marked "====="
 
-typedef union DBR_sector {  // 512 bytes
+typedef union DBR_union {  // 512 bytes
 	u8 buf[512];  // stores raw data
 	DBR_ATTRS attrs;
 } DBR_SEC;
@@ -75,7 +77,7 @@ typedef struct short_dir_entry_struct {  // 32 bytes
 	u32 length;  // ===== in bytes ?
 } SHORT_DIR_ENTRY_ATTRS;
 
-typedef union short_dir_entry {
+typedef union short_dir_entry_union {
 	SHORT_DIR_ENTRY_ATTRS attrs;
 	u8 entry[32];  // raw data
 } SHORT_DIR_ENTRY;
@@ -87,13 +89,19 @@ typedef struct file_struct {
 	// the sector including dir-entry (related to DBR sector) =====
 	unsigned long dir_entry_sector;
 	SHORT_DIR_ENTRY entry;  // current directory entry
-	U8 clock_head;  // points to one of the buffer blocks
-	BUF_4K data_buf[LOCAL_DATA_BUF_NUM];  // 4 local buffer blocks
-} FILE;
+	u8 clock_head;  // points to one of the buffer blocks
+	BUF_4K data_buf[LOCAL_BUF_NUM];  // 4 local buffer blocks
+} fs_FILE;
+
+// the following structures are used as global in main process:
+// ========================================== //
+DBR_SEC DBR_sec;  // attrs and raw data
+FSINFO_SEC FSINFO_sec;  // attrs and raw data
+// ========================================== //
 
 // ========== below are functions: ========== //
 
-void init_FILE(FILE *f_ptr);  // clear struct FILE
+void init_FILE(fs_FILE *f_ptr);  // clear struct FILE
 
 int init_on_boot();  // call init_fat_dir_bufs() and init_MBR_DBR();
 
