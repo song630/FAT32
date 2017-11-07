@@ -50,6 +50,7 @@ int init_MBR_DBR()
 	// but the data should not be put in global buffer, so cannot call read_512().
 	read_blocks(FSINFO_sec.buf, FSINFO_sec.base_addr + 1, 1);
 	#ifdef FS_DEBUG
+	printf("inside init_MBR_DBR(): base_addr = %ld.\n", FSINFO_sec.base_addr);
 	printf("inside init_MBR_DBR(): FSINFO read in. The contents of FSINFO: \n");
 	dump_block_512(FSINFO_sec.buf);  // print the sector MBR
 	#endif
@@ -60,7 +61,7 @@ int init_MBR_DBR()
 	#endif
 
 	// 3. set some attrs, and check if the values of some attrs are correct.
-	printf("bytes_per_sec: %x.\n", DBR_sec.attrs.intermediate);
+	printf("bytes_per_sec: %d.\n", DBR_sec.attrs.bytes_per_sec);
 	// ===== 2 problems: ===== //
 	// 1. sth wrong with alignment
 	// 2. in read_blocks(): DBR_sec.attrs.bytes_per_sec, DBR_sec.attrs.total_secs

@@ -13,7 +13,13 @@
 
 // some FAT32 featured data structures defined here:
 
-struct __attribute__((__packed__)) DBR_struct {  // 512 bytes
+#pragma pack (1)
+// ===== NOTICE: __attribute__((__packed__)) does not work,
+// so instead, use #pragma pack (1), which means aligning by 1 byte.
+// w/o this, it will use natural alignment, which spares all members
+// space of sizeof(the largest member).
+
+struct /*__attribute__((__packed__))*/ DBR_struct {  // 512 bytes
 	u8 jump_instr[3];  // 3 bytes, machine instruction
 	// ===== ERROR: u32 edition[2]
 	u8 edition[8];  // 8 bytes, edition of fs
@@ -35,16 +41,18 @@ struct __attribute__((__packed__)) DBR_struct {  // 512 bytes
 	u32 root_clus;  // 4 bytes, should be 2 =====
 	u16 FSINFO_sec;  // 2 bytes, should be 1 =====
 	u16 copy_DBR_SEC;  // 2 bytes, should be 6
-	u32 extension[3];  // 12 bytes
+	u8 extension[12]; // u32 extension[3];  // 12 bytes
 	u8 dummy4;  // 1 byte
 	u8 dummy5;  // 1 byte
 	u8 ext_mark;  // 1 byte, should be 0x29
 	u32 volume_sequence;  // 4 bytes
 	u8 vol_mark[11];  // 11 bytes
 	u8 fs_format[8];  // 8 bytes
-	u8 unused[410];  // 410 bytes
-	u16 signature;  // 2 bytes, should be 0x55AA
+	u8 unused[420];  // 410 bytes
+	u8 signature[2]; // u16 signature;  // 2 bytes, should be 0x55AA
 };  // important attrs have been marked "====="
+
+#pragma pack ()  // return to default pack
 
 typedef union DBR_union {  // 512 bytes
 	u8 buf[512];  // stores raw data of DBR sector
@@ -64,7 +72,9 @@ typedef struct fsinfo_struct {
 	u8 buf[512];  // stores raw data of FSINFO sector
 } FSINFO_SEC;
 
-struct __attribute__((__packed__)) short_dir_entry_struct {  // 32 bytes
+#pragma pack (1)
+
+struct /*__attribute__((__packed__))*/ short_dir_entry_struct {  // 32 bytes
 	u8 fore_name[8];  // file name
 	u8 ext_name[3];  // extension name
 	u8 attr_byte;  // one-hot
@@ -79,6 +89,8 @@ struct __attribute__((__packed__)) short_dir_entry_struct {  // 32 bytes
 	u16 start_clus_low_16;  // =====
 	u32 length;  // ===== in bytes ?
 };
+
+#pragma pack ()
 
 typedef union short_dir_entry_union {
 	struct short_dir_entry_struct attrs;
