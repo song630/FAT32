@@ -92,6 +92,7 @@ int read_4k(BUF_4K *buf, u32 start_sec, u8 *clock_head, u8 buf_size)
 			printf("inside read_4k(): ");
 			printf("the block is already in buf[%d].\n", i);
 			#endif
+			buf[i].state |= 0x02;  // set ref bit 1
 			return i;
 		}
 	// otherwise, find a victim
@@ -100,8 +101,7 @@ int read_4k(BUF_4K *buf, u32 start_sec, u8 *clock_head, u8 buf_size)
 	printf("inside read_4k(): called victim_4k(), ");
 	printf("the content is put in buf[%d].\n", vic);
 	#endif
-	if ((buf[vic].state & 0x01) == 0)  // dirty
-		write_4k(&buf[vic]);  // the dirty bit is set 0 here
+	write_4k(&buf[vic]);  // the dirty bit is set 0 here
 	read_blocks(buf[vic].buf, FSINFO_sec.base_addr + start_sec, DBR_sec.attrs.secs_per_clus);
 	buf[vic].state |= 0x02;  // the ref bit is set 1 here
 	buf[vic].sec = start_sec;
@@ -180,6 +180,7 @@ int read_512(BUF_512 *buf, u32 sec, u8 *clock_head, u8 buf_size)
 			printf("inside read_512(): ");
 			printf("the block is already in buf[%d].\n", i);
 			#endif
+			buf[i].state |= 0x02;  // set ref bit 1
 			return i;
 		}
 	// otherwise, find a victim
@@ -188,8 +189,7 @@ int read_512(BUF_512 *buf, u32 sec, u8 *clock_head, u8 buf_size)
 	printf("inside read_512(): called victim_512(), ");
 	printf("the content is put in buf[%d].\n", vic);
 	#endif
-	if ((buf[vic].state & 0x01) == 0)  // dirty
-		write_512(&buf[vic]);  // the dirty bit is set 0 here
+	write_512(&buf[vic]);  // will check the dirty bit, ad set it 0 afterwards
 	read_blocks(buf[vic].buf, FSINFO_sec.base_addr + sec, 1);
 	buf[vic].state |= 0x02;  // the ref bit is set 1 here
 	buf[vic].sec = sec;

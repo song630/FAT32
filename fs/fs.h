@@ -126,13 +126,13 @@ void init_dir_bufs();  // init global buffers
 
 int init_MBR_DBR();
 
-int write_FAT_sector(u32 index);  // write a sector of FAT table
+int write_FAT_sector(u8 index);  // write a sector of FAT table
 
 int read_FAT_sector(u32 index);  // read a sector from FAT table
 // iteratively deal with the names along the file path,
-// convert them to the format that storing in short dir entry,
+// convert them to the format that to be stored in short dir entry,
 // and put the result in the given param.
-void convert_name_between_slash(u8 *path, u8 *short_name);
+int convert_name_between_slash(u8 *path, u32 *cur, u8 *short_name);
 // accepts an absolute path, and find the file
 // find every sub-dir by means of short dir entry
 int find_file(fs_FILE *f_ptr);

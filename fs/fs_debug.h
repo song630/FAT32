@@ -46,4 +46,35 @@ void dump_block_4k(u8 *block)
 	}
 }
 
+extern DBR_SEC DBR_sec;
+
+void dump_DBR_info()
+{
+	printf("\ninside init_MBR_DBR(): values of some attrs in DBR:\n");
+	printf("\tedition: %s\n", DBR_sec.attrs.edition);
+	printf("\tbytes_per_sec: %d\n", DBR_sec.attrs.bytes_per_sec);
+	printf("\tsecs_per_clus: %d\n", DBR_sec.attrs.secs_per_clus);
+	printf("\treserved_secs: %d\n", DBR_sec.attrs.reserved_secs);
+	printf("\tnum_FAT: %d\n", DBR_sec.attrs.num_FAT);
+	printf("\thidden_secs: %ld\n", DBR_sec.attrs.hidden_secs);
+	printf("\ttotal_secs: %ld\n", DBR_sec.attrs.total_secs);
+	printf("\tsecs_per_FAT: %ld\n", DBR_sec.attrs.secs_per_FAT);
+	printf("\troot_clus: %ld\n", DBR_sec.attrs.root_clus);
+	printf("\tFSINFO_sec: %d\n", DBR_sec.attrs.FSINFO_sec);
+	printf("\tcopy_DBR_SEC: %d\n", DBR_sec.attrs.copy_DBR_SEC);
+}
+
+extern FSINFO_SEC FSINFO_sec;
+
+void dump_FSINFO_info()
+{
+	printf("\ninside init_MBR_DBR(): values of some attrs in FSINFO:\n");
+	printf("\tempty_clusters: %ld\n", FSINFO_sec.empty_clusters);
+	printf("\tnext_avil_clus: %ld\n", FSINFO_sec.next_avil_clus);
+	printf("\tbase_addr: %ld\n", FSINFO_sec.base_addr);
+	printf("\ttotal_data_clusters: %ld\n", FSINFO_sec.total_data_clusters);
+	printf("\ttotal_data_sectors: %ld\n", FSINFO_sec.total_data_sectors);
+	printf("\tfirst_data_sector: %ld\n", FSINFO_sec.first_data_sector);
+}
+
 #endif
