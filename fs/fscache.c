@@ -61,16 +61,18 @@ u8 victim_4k(BUF_4K *buf, u8 *clock_head, u8 buf_size)
  */
 void write_4k(BUF_4K *block)
 {
+	unsigned int start, end;
 	if ((block->state & 0x01) == 0)  // dirty bit == 0, do nothing
 		return;  // success
 	else  // write
 	{
 		write_blocks(block->buf, FSINFO_sec.base_addr + block->sec, DBR_sec.attrs.secs_per_clus);
 		#ifdef FS_DEBUG
+		start = FSINFO_sec.base_addr + block->sec;
+		end = FSINFO_sec.base_addr + block->sec + DBR_sec.attrs.secs_per_clus - 1;
 		printf("inside write_4k(): ");
-		printf("sector %ld to sector %ld of FS modified.\n", 
-			FSINFO_sec.base_addr + block->sec, 
-			FSINFO_sec.base_addr + block->sec + DBR_sec.attrs.secs_per_clus - 1);
+		printf("sector %d (ABSOLUTE, offset is %X) to ", start, start * 512);
+		printf("sector %d (ABSOLUTE, offset is %X) of FS modified.\n", end, end * 512);
 		#endif
 		block->state &= 0x02;  // set dirty bit 0
 	}
@@ -154,14 +156,16 @@ u8 victim_512(BUF_512 *buf, u8 *clock_head, u8 buf_size)
 
 void write_512(BUF_512 *block)
 {
+	unsigned int addr;
 	if ((block->state & 0x01) == 0)  // dirty bit == 0, do nothing
 		return;  // success
 	else  // write
 	{
 		write_blocks(block->buf, FSINFO_sec.base_addr + block->sec, 1);
 		#ifdef FS_DEBUG
+		addr = FSINFO_sec.base_addr + block->sec;
 		printf("inside write_512(): ");
-		printf("sector %ld of FS modified.\n", FSINFO_sec.base_addr + block->sec);
+		printf("sector %d (ABSOLUTE, offset is %X) of FS modified.\n", addr, 512 * addr);
 		#endif
 		block->state &= 0x02;  // set dirty bit 0
 	}
@@ -200,7 +204,7 @@ int read_512(BUF_512 *buf, u32 sec, u8 *clock_head, u8 buf_size)
  * dst_sec: write to the dst starting sector of SD (related to 0)
  * num_blocks: write these blocks
  *
- * notice: this function doees not modify "state"
+ * notice: this function does not modify "state"
  */
 int write_blocks(u8 *buf, u32 dst_sec, u8 num_blocks)
 {
@@ -213,7 +217,7 @@ int write_blocks(u8 *buf, u32 dst_sec, u8 num_blocks)
 		return 1;  // fail
 	}
 	*/
-	if ((f_ptr = fopen(SD_PATH, "wb")) == NULL)
+	if ((f_ptr = fopen(SD_PATH, "rb+")) == NULL)
 	{
 		printf("inside write_blocks(): Fail to open file.\n");
 		return 1;  // fail

@@ -76,3 +76,38 @@ void fs_memcpy(void *dst, void *src, u32 count)
 	for (i = 0; i <= count - 1; i++)
 		*(dst_ptr + i) = *(src_ptr + i);
 }
+
+// providing a cluster addr (RELATIVE), return the addr of its 1st sector
+u32 sec_addr_from_clus(u32 clus_num)
+{  // "2": cluster starts from 2 in data section
+	return (clus_num - 2) * 8 + FSINFO_sec.first_data_sector;
+}
+
+// providing a sector addr, return the num of cluster it belongs to
+u32 clus_num_from_sec(u32 sec_num)
+{  // "sec_num" should be more than "first_data_sector"
+	return (sec_num - FSINFO_sec.first_data_sector) / 8 + 2;
+}
+
+/* "buf": buffer block containing the sector in data section
+ * "offset": byet offset of the dst directory entry
+ * byte offset inside the entry: 20, 26 (start_clus_high_16, start_clus_low_16)
+ * return: num of start cluster.
+ */
+u32 get_file_start_clus(u16 offset, BUF_512 *buf)
+{
+	return (get_u16(buf->buf + offset + 20) << 16) + get_u16(buf->buf + offset + 26);
+}
+
+// given a cluster number, get the related FAT entry value
+// to get the next linked cluster.
+// 0x0FFFFFFF marking the end
+u32 FAT_entry_from_clus(u32 clus)
+{
+	// offset from the start of FAT table
+	u32 offset = clus << 2;  // clus * 4, since each entry has 4 bytes
+	u32 sec_num = DBR_sec.attrs.reserved_secs + offset / DBR_sec.attrs.bytes_per_sec;  // RELATIVE
+	u32 sec_offset = offset % DBR_sec.attrs.bytes_per_sec;  // offset from the start of sector
+	int buf_index = read_FAT_sector(sec_num);  // read in this sector
+	return get_u32(fat_buf[buf_index].buf + sec_offset);
+}

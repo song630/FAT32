@@ -26,8 +26,7 @@ void dump_block_512(u8 *block)
 {
 	int i;
 	printf("Dump a block (512):\n");
-	for (i = 0; i <= 511; i++)
-	{
+	for (i = 0; i <= 511; i++) {
 		printf("%02X ", block[i]);
 		if (i % 16 == 15)
 			printf("\n");
@@ -38,8 +37,7 @@ void dump_block_4k(u8 *block)
 {
 	int i;
 	printf("Dump a block (4k):\n");
-	for (i = 0; i <= 512 * 8 - 1; i++)
-	{
+	for (i = 0; i <= 512 * 8 - 1; i++) {
 		printf("%02X ", block[i]);
 		if (i % 16 == 15)
 			printf("\n");
@@ -75,6 +73,22 @@ void dump_FSINFO_info()
 	printf("\ttotal_data_clusters: %ld\n", FSINFO_sec.total_data_clusters);
 	printf("\ttotal_data_sectors: %ld\n", FSINFO_sec.total_data_sectors);
 	printf("\tfirst_data_sector: %ld\n", FSINFO_sec.first_data_sector);
+}
+
+void dump_fs_FILE(fs_FILE *f_ptr)
+{
+	int i;
+	printf("\tdump fs_FILE:\n");
+	printf("\tpath: %s\n", f_ptr->path);
+	printf("\tloc: %ld\n", f_ptr->loc);
+	printf("\tdir_entry_pos = %ld\n", f_ptr->dir_entry_pos);
+	printf("\tdir_entry_sector = %ld\n", f_ptr->dir_entry_sector);
+	printf("\tentry[32]: \n\t");
+	for (i = 0; i < 32; i++) {
+		printf("%02X ", f_ptr->entry.entry[i]);
+		if (i % 16 == 15)
+			printf("\n\t");
+	}
 }
 
 #endif
